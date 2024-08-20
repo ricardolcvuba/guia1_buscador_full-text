@@ -1,0 +1,6 @@
+[package]
+name = "guia1_buscador_full-text"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
