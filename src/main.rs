@@ -15,9 +15,31 @@ impl From<io::Error> for Errores {
     }
 }
 
-struct Palabra{
+struct Documento{
+    nombre : String,
+    id_doc : i32,
+}
+
+struct EstadisticaPalabra {
+    id_doc:i32,
     cant:i32,
-    id_doc:i32
+}
+
+impl EstadisticaPalabra {
+    pub fn new(id_doc:i32 ,cant:i32) -> EstadisticaPalabra {
+        EstadisticaPalabra {
+            id_doc,
+            cant,
+        }
+    }
+
+    pub fn sumar_cant(&mut self){
+        self.cant += 1;
+    }
+
+    pub fn get_id_doc(&self) -> i32{
+        self.id_doc
+    }
 }
 
 fn eliminar_signo_de_puntuacion(contenido : String) -> String{
@@ -68,18 +90,41 @@ fn parsear_contenido(contenido:String) -> Result<Vec<String>, Errores>{
     Ok(contenido_parseado)
 }
 
-fn leer_todos_los_arch(dir : String) -> Result<HashMap<String, Vec<Palabra>>, Errores>{
-    let hash = HashMap::new();
+fn agregar_al_hash(palabra:String, hash : &mut HashMap<String, Vec<EstadisticaPalabra>>) -> &mut HashMap<String, Vec<EstadisticaPalabra>> {
+
+    if !hash.contains_key(&palabra){
+
+    }
+
+    hash
+}
+
+fn leer_todos_los_arch(dir : String) -> Result<HashMap<String, Vec<EstadisticaPalabra>>, Errores>{
+    let mut hash = HashMap::new();
 
     let entradas_de_arch = fs::read_dir(dir)?;
 
+    //Para cada archivo que sea extencion .txt se va a leer el contenido del documento
     for entrada_arch in entradas_de_arch {
-        let entrada = entrada_arch?;
-        let path_arch = entrada.path();
+        let entrada = entrada_arch?; //Devuelve la entrada del inodo leido
+        let path_arch = entrada.path(); //Obtiene el path de la entrada del archivo
 
+        //Verifica si la entrada leida es un archivo y es una extencion .txt
         if path_arch.is_file() && path_arch.extension().and_then(|s| s.to_str()) == Some("txt"){
-            let contenido = leer_arch(&path_arch)?;
-            let contenido_parseado = parsear_contenido(contenido)?;
+            let contenido = leer_arch(&path_arch)?; //Baja todo el contenido del acrhivo
+            let contenidos_parseado = parsear_contenido(contenido)?; //Hace el preprocesamiento y la vectorizacion al contenido leido
+
+            for (id_doc, palabra) in contenidos_parseado.iter().enumerate(){
+                if !hash.contains_key(palabra){
+                    let estadistica_palabra = EstadisticaPalabra::new(id_doc as i32, 1);
+                    let mut vector_estadisticas_palabras : Vec<EstadisticaPalabra> = Vec::new();
+                    vector_estadisticas_palabras.push(estadistica_palabra);
+                    hash.insert(palabra.to_string(), vector_estadisticas_palabras);
+                }
+                else if hash.contains_key(palabra) && hash.get_mut(palabra).unwrap().get_mut(id_doc).unwrap().get_id_doc() == id_doc as i32{
+                    hash.get_mut(palabra).unwrap().get_mut(id_doc).unwrap().sumar_cant();
+                }
+            }
 
         }
     }
@@ -98,8 +143,8 @@ fn leer_arch(path_arch : &Path) -> Result<String, Errores>{
 
 #[test]
 pub fn test_parsear_contenido(){
-    let resultado = parsear_contenido("El hola como y\n".to_string()).unwrap();
-    let esperado = vec!["hola".to_string(), "como".to_string()];
+    let resultado = parsear_contenido("El hola como como y\n".to_string()).unwrap();
+    let esperado = vec!["hola".to_string(), "como".to_string(), "como".to_string()];
     assert_eq!(resultado, esperado)
 }
 
