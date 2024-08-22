@@ -80,6 +80,7 @@ fn leer_todos_los_arch(dir : String) -> Result<HashMap<String, Vec<Palabra>>, Er
         if path_arch.is_file() && path_arch.extension().and_then(|s| s.to_str()) == Some("txt"){
             let contenido = leer_arch(&path_arch)?;
             let contenido_parseado = parsear_contenido(contenido)?;
+
         }
     }
 
@@ -90,7 +91,7 @@ fn leer_arch(path_arch : &Path) -> Result<String, Errores>{
     let mut arch = fs::File::open(path_arch)?;
     let mut contenido = String::new();
 
-    arch.read_to_string(&mut contenido);
+    arch.read_to_string(&mut contenido)?;
 
     Ok(contenido)
 }
