@@ -5,13 +5,15 @@ use std::path::Path;
 
 #[derive(Debug)]
 pub enum Errores {
-    LeerArchDir(io::Error),
+    IoError(io::Error),
+    LeerArchDir,
+    leerInputUs
 }
 
 // Implementa From<io::Error> para que `?` pueda convertir automáticamente los errores
 impl From<io::Error> for Errores {
     fn from(error: io::Error) -> Self {
-        Errores::LeerArchDir(error)
+        Errores::IoError(error)
     }
 }
 
@@ -98,15 +100,6 @@ fn parsear_contenido(contenido:String) -> Result<Vec<String>, Errores>{
     Ok(contenido_parseado)
 }
 
-fn agregar_al_hash(palabra:String, hash : &mut HashMap<String, Vec<EstadisticaPalabra>>) -> &mut HashMap<String, Vec<EstadisticaPalabra>> {
-
-    if !hash.contains_key(&palabra){
-
-    }
-
-    hash
-}
-
 fn leer_todos_los_arch(dir : String, documentos:&mut Vec<Documento>) -> Result<HashMap<String, Vec<EstadisticaPalabra>>, Errores>{
     let mut hash = HashMap::new();
 
@@ -149,13 +142,12 @@ fn leer_todos_los_arch(dir : String, documentos:&mut Vec<Documento>) -> Result<H
                     }
                 }
             }
-
         }
         id_doc+=1
     }
-
     Ok(hash)
 }
+
 
 fn leer_arch(path_arch : &Path) -> Result<String, Errores>{
     let mut arch = fs::File::open(path_arch)?;
@@ -164,6 +156,27 @@ fn leer_arch(path_arch : &Path) -> Result<String, Errores>{
     arch.read_to_string(&mut contenido)?;
 
     Ok(contenido)
+}
+
+/*##########################----->CALCULO DE SCORE<--------########################*/
+/*
+El último paso es implementar la búsqueda. Para ello, se debe solicitar al usuario una frase a buscar y aplicar la
+tokenización de la misma y la eliminación de las stop words. Se debe buscar los documentos que contengan los términos de búsqueda ingresados.
+
+Luego se debe determinar la relevancia de cada documento resultado de la búsqueda. Para esto, se debe determinar
+el puntaje del documento. Esto se puede computar a partir de sumar las frecuencias de cada uno de los términos encontrados.
+
+Para mejorar el cálculo de puntaje del documento, calcularemos la frecuencia inversa de documentos para un término
+(denominado tf-idf) dividiendo la cantidad de documentos (N) en el índice por la cantidad de documentos que contienen
+el término, y tomaremos el logaritmo.
+*/
+
+fn input_usuario() -> Result<String, Errores>{
+    let mut input = String::new();
+    match io::stdin().read_line(&mut input) {
+        Ok(_) => { Ok(input) }
+        Err(_) => { Err(Errores::leerInputUs) }
+    }
 }
 
 #[test]
